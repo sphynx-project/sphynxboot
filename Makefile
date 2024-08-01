@@ -94,4 +94,5 @@ test: | $(TARGET_COMMON) $(TARGET_TEST) $(OVMF)
 clean:
 	@$(MAKE) -C $(COMMON_DIR) clean
 	@$(MAKE) -C $(TEST_DIR) clean
+	@echo " + rm -rf $(BIN_DIR) mnt boot.img $(DEPS_DIR)"
 	@rm -rf $(BIN_DIR) mnt boot.img $(DEPS_DIR)
