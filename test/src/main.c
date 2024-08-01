@@ -7,9 +7,16 @@ void hlt()
         ;
 }
 
-void _start() {
-    uint8_t value = 'A';
+void putc(char ch) {
     uint16_t port = 0xE9;
-    __asm__ volatile ("outb %0, %1" : : "a"(value), "Nd"(port));
+    __asm__ volatile ("outb %0, %1" : : "a"(ch), "Nd"(port));
+}
+
+void _start() {
+    putc('\033');
+    putc('c');
+    putc('A');
+    putc('B');
+    putc('C');
     hlt();
 }
