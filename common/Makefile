@@ -14,11 +14,13 @@ TARGET := sphynxboot.efi
 all: $(TARGET)
 
 $(TARGET): $(OBJS)
-	$(CC) $(LDFLAGS) -o $@ $^
+	@echo " + $(CC) $(LDFLAGS) -o $@ $^"
+	@$(CC) $(LDFLAGS) -o $@ $^
 
 %.o: %.c
-	$(CC) $(CFLAGS) -c -o $@ $<
+	@$(CC) $(CFLAGS) -c -o $@ $<
 
 .PHONY: clean
 clean:
+	@echo " + rm -f $(OBJS) $(TARGET)"
 	@rm -f $(OBJS) $(TARGET)

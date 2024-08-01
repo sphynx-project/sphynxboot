@@ -19,21 +19,21 @@ all: setup deps kernel $(TARGET_COMMON)
 
 define DOWNLOAD_template
 $(DEPS_DIR)/$(1):
-	@echo "+ mkdir -p $(TMP_DIR)/$(1)"
+	@echo " + mkdir -p $(TMP_DIR)/$(1)"
 	@mkdir -p $(TMP_DIR)/$(1)
-	@echo "+ mkdir -p $(DEPS_DIR)/$(1)"
+	@echo " + mkdir -p $(DEPS_DIR)/$(1)"
 	@mkdir -p $(DEPS_DIR)/$(1)
 ifeq ($(2),.zip)
-	@echo "+ curl -Ls $(3) -o $(TMP_DIR)/$(1)/$(1).zip"
+	@echo " + curl -Ls $(3) -o $(TMP_DIR)/$(1)/$(1).zip"
 	@curl -Ls $(3) -o $(TMP_DIR)/$(1)/$(1).zip
-	@echo "+ unzip -q $(TMP_DIR)/$(1)/$(1).zip -d $(TMP_DIR)/$(1)"
+	@echo " + unzip -q $(TMP_DIR)/$(1)/$(1).zip -d $(TMP_DIR)/$(1)"
 	@unzip -o -q $(TMP_DIR)/$(1)/$(1).zip -d $(TMP_DIR)/$(1)
-	@echo "+ mv $(TMP_DIR)/$(1)/*/* $(DEPS_DIR)/$(1)"
+	@echo " + mv $(TMP_DIR)/$(1)/*/* $(DEPS_DIR)/$(1)"
 	@mv $(TMP_DIR)/$(1)/*/* $(DEPS_DIR)/$(1)
-	@echo "+ rm -rf $(TMP_DIR)/$(1)"
+	@echo " + rm -rf $(TMP_DIR)/$(1)"
 	@rm -rf $(TMP_DIR)/$(1)
 else
-	@echo "+ curl -Ls $(3) -o $(DEPS_DIR)/$(1)/$(notdir $(3))"
+	@echo " + curl -Ls $(3) -o $(DEPS_DIR)/$(1)/$(notdir $(3))"
 	@curl -Ls $(3) -o $(DEPS_DIR)/$(1)/$(notdir $(3))
 endif
 

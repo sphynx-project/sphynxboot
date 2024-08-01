@@ -60,61 +60,6 @@ void load_kernel()
     free(buffer);
     free(path_wide);
 
-    EFI_STATUS status;
-
-    EFI_GUID gopGuid = EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID;
-    EFI_GRAPHICS_OUTPUT_PROTOCOL *gop;
-
-    EFI_GRAPHICS_OUTPUT_MODE_INFORMATION *info;
-    EFI_UINTN SizeOfInfo, numModes, nativeMode;
-
-    status = systemTable->BootServices->LocateProtocol(&gopGuid, NULL, (void **)&gop);
-    if (EFI_ERROR(status))
-    {
-        printf("ERROR: Failed to locate GOP protocol\n");
-        free(data);
-        for (;;)
-            ;
-    }
-
-    status = gop->QueryMode(gop, gop->Mode == NULL ? 0 : gop->Mode->Mode, &SizeOfInfo, &info);
-    if (status == (EFI_UINTN)EFI_NOT_STARTED)
-    {
-        status = gop->SetMode(gop, 0);
-    }
-
-    if (EFI_ERROR(status))
-    {
-        printf("ERROR: Unable to get native mode\n");
-        free(data);
-        for (;;)
-            ;
-    }
-    else
-    {
-
-        nativeMode = gop->Mode->Mode;
-        numModes = gop->Mode->MaxMode;
-    }
-
-    status = gop->QueryMode(gop, nativeMode, &SizeOfInfo, &info);
-    if (EFI_ERROR(status))
-    {
-        printf("ERROR: Unable to get native mode info\n");
-        free(data);
-        for (;;)
-            ;
-    }
-
-    status = gop->SetMode(gop, nativeMode);
-    if (EFI_ERROR(status))
-    {
-        printf("ERROR: Unable to set mode\n");
-        free(data);
-        for (;;)
-            ;
-    }
-
     // TODO: Setup the env for the kernel and pass shit based on protocol
     systemTable->BootServices->ExitBootServices(imageHandle, 0);
     void (*entry)(void) = (void (*)(void))(uintptr_t)data->entry_point;
