@@ -9,7 +9,7 @@ COMMON_DIR := common
 TEST_DIR := test
 
 TARGET_TEST := $(TEST_DIR)/kernel.elf
-TARGET_COMMON := $(BIN_DIR)/BOOTX64.elf
+TARGET_COMMON := $(BIN_DIR)/BOOTX64.efi
 
 OVMF := $(DEPS_DIR)/ovmf/RELEASEX64_OVMF.fd
 ROOT_DIR := $(shell pwd)
