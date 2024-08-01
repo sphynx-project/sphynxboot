@@ -1,0 +1,10 @@
+*.o
+*.efi
+*.img
+*.fd
+*.elf
+
+/deps/
+/bin/
+/.vscode/
+/mnt/
