@@ -14,7 +14,7 @@ bool _validate_header(elf_header *header)
 {
     if (header == NULL)
     {
-        printf("ERROR: NULL ELF header passed!\n");
+        printf(" - Error: NULL ELF header passed!\n");
         return false;
     }
 
@@ -47,13 +47,13 @@ elf_exec_handle *load_elf(const void *data)
     elf_header *header = (elf_header *)data;
     if (!_validate_header(header))
     {
-        printf("ERROR: Invalid ELF header!\n");
+        printf(" - Error: Invalid ELF header!\n");
         return NULL;
     }
 
     if (header->phnum <= 0)
     {
-        printf("ERROR: No loadable segments found.\n");
+        printf(" - Error: No loadable segments found.\n");
         return NULL;
     }
 

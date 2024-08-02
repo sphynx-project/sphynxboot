@@ -13,7 +13,7 @@ To the extent possible under law, the author(s) have dedicated all copyright and
 #include <lib/alloc.h>
 #include <fs/sfs.h>
 
-void map_kernel() {
+void map_high() {
 }
 
 
@@ -31,8 +31,9 @@ void load_kernel(char *path)
         }
     }
 
-    printf(" - Loading %s\n", path);
-    map_kernel();
+    printf(" - Info: Loading %s\n", path);
+    map_high();
+    printf(" - Info: Mapped higher half\n");
 
     CHAR16 *path_wide = malloc(strlen(kernel_path) * sizeof(CHAR16) + 2);
     utf8_char_to_wchar(kernel_path, path_wide);
@@ -78,9 +79,9 @@ void load_kernel(char *path)
     free(path_wide);
 
 
-    printf("%s: 0x%llx", path, data->entry_point);
+    printf("%s: 0x%llx - ready", path, data->entry_point);
 
-    // TODO: Setup the env for the kernel and pass shit based on protocol
+    // TODO: Setup the env for the kernel and pass based on protocol
     systemTable->BootServices->ExitBootServices(imageHandle, 0);
     void (*entry)(void) = (void (*)(void))(uintptr_t)data->entry_point;
     entry();
