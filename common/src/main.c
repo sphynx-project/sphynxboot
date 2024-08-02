@@ -55,7 +55,7 @@ EFI_STATUS sphynxboot_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
         L"║                                       ║                 \\ .'-. \\\\   .-'_. /        \r\n",
         L"║                                       ║                  '._' '.\\\\/.-'_.'           \r\n",
         L"║                                       ║                     '--``\\('--'              \r\n",
-        L"║ sphynxboot v0.0.1 (Rose alpha)        ║                           \\\\                \r\n",
+        L"║ sphynxboot v1.0.0 (Rose alpha)        ║                           \\\\                \r\n",
         L"╚═══════════════════════════════════════╝                           `\\\\,              \r\n",
         L"                                                                      \\|               \r\n",
     };
@@ -121,6 +121,9 @@ EFI_STATUS sphynxboot_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
 
     EFI_INPUT_KEY key;
     EFI_UINTN index;
+
+
+    stdout->SetAttribute(stdout, EFI_LIGHTGRAY | EFI_BACKGROUND_BLACK);
 
     while (1) {
         EFI_EVENT WaitList[1] = {systemTable->ConIn->WaitForKey};  // Only wait for key events now

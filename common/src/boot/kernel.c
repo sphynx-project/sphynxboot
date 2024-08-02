@@ -19,10 +19,19 @@ void map_kernel() {
 
 void load_kernel(char *path)
 {
-    char *kernel_path = path;
+    char kernel_path[256];
+    char *p;
+
+    strncpy(kernel_path, path, sizeof(kernel_path) - 1);
+    kernel_path[sizeof(kernel_path) - 1] = '\0';
+
+    for (p = kernel_path; *p; ++p) {
+        if (*p == '/') {
+            *p = '\\';
+        }
+    }
 
     printf(" - Loading %s\n", path);
-
     map_kernel();
 
     CHAR16 *path_wide = malloc(strlen(kernel_path) * sizeof(CHAR16) + 2);

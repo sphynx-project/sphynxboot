@@ -85,7 +85,7 @@ test: | $(TARGET_COMMON) $(TARGET_TEST) $(OVMF)
 	    sudo mkdir -p mnt/EFI/BOOT; \
 	    sudo cp $(TARGET_COMMON) mnt/EFI/BOOT/BOOTX64.efi; \
 	    sudo mkdir -p mnt/boot/kernel; \
-		sudo cp $(TARGET_TEST) mnt/boot/kernel; \
+		sudo cp $(TARGET_TEST) mnt/boot/kernel/kernel; \
 	    sudo umount mnt; \
 	    rm -rf mnt; \
 	fi
