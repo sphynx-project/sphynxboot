@@ -44,17 +44,20 @@ EFI_STATUS sphynxboot_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
     };
 
     CHAR16 *menu[] = {
-        L"╔══════════ Welcome to Sphynx ══════════╗\r\n",
-        L"║                                       ║\r\n",
-        L"║ 1. Boot Sphynx Normally (Enter)       ║\r\n",
-        L"║ 2. Reboot                             ║\r\n",
-        L"║                                       ║\r\n",
-        L"║ 3. Enter Firmware Settings (Esc)      ║\r\n",
-        L"║                                       ║\r\n",
-        L"║                                       ║\r\n",
-        L"║                                       ║\r\n",
-        L"║ sphynxboot v0.0.1                     ║\r\n",
-        L"╚═══════════════════════════════════════╝\r\n",
+        L"                                                          _,--._.-,                     \r\n",
+        L"                                                         /\\_r-,\\_ )                   \r\n",
+        L"╔══════════ Welcome to Sphynx ══════════╗             .-.) _;='_/ (.;                   \r\n",
+        L"║                                       ║              \\ \'     \\/S )                 \r\n",
+        L"║ 1. Boot Sphynx Normally (Enter)       ║               L.'-. _.'|-'                    \r\n",
+        L"║ 2. Reboot                             ║              <_`-'\'_.'/                      \r\n",
+        L"║                                       ║                `'-._( \\                      \r\n",
+        L"║ 3. Enter Firmware Settings (Esc)      ║                 ___   \\\\,      ___          \r\n",
+        L"║                                       ║                 \\ .'-. \\\\   .-'_. /        \r\n",
+        L"║                                       ║                  '._' '.\\\\/.-'_.'           \r\n",
+        L"║                                       ║                     '--``\\('--'              \r\n",
+        L"║ sphynxboot v0.0.1 (Rose alpha)        ║                           \\\\                \r\n",
+        L"╚═══════════════════════════════════════╝                           `\\\\,              \r\n",
+        L"                                                                      \\|               \r\n",
     };
 
      for (int i = 0; i < sizeof(banner) / sizeof(banner[0]); i++) {
@@ -81,10 +84,11 @@ EFI_STATUS sphynxboot_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
             }
 
             stdout->SetAttribute(stdout, EFI_LIGHTGRAY | EFI_BACKGROUND_BLACK);
-            
-            if (ch == L'B') {
+
+
+            if (ch == L'B' && i <= 8) {
                 stdout->SetAttribute(stdout, EFI_WHITE | EFI_BACKGROUND_BLACK);
-            } else if (ch == L'R') {
+            } else if (ch == L'R' && i <= 8) {
                 stdout->SetAttribute(stdout, EFI_WHITE | EFI_BACKGROUND_BLACK);
             } else if ((menu[i][j-1] == L'(' && ch == L'E' && menu[i][j+1] == L'n' && menu[i][j+2] == L't' && menu[i][j+3] == L'e' && menu[i][j+4] == L'r' && menu[i][j+5] == L')') || (are_we_done != word_len && saved_i == i && word_len == 5)) {
                 if (are_we_done == 0) {
@@ -102,6 +106,10 @@ EFI_STATUS sphynxboot_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
 
                 are_we_done++;
                 stdout->SetAttribute(stdout, EFI_WHITE | EFI_BACKGROUND_BLACK);
+            } else if(j >= 42 && i <= 6) {
+                stdout->SetAttribute(stdout, EFI_LIGHTRED | EFI_BACKGROUND_BLACK);
+            } else if(j >= 42 & i >= 7) {
+                stdout->SetAttribute(stdout, EFI_GREEN | EFI_BACKGROUND_BLACK);
             } else {
                 stdout->SetAttribute(stdout, EFI_LIGHTGRAY | EFI_BACKGROUND_BLACK);
             }
