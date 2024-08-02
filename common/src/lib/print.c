@@ -1,11 +1,5 @@
-/*
-sphynxboot - A bootloader for modern systems.
-Written in 2024 by Kevin Alavik <kevin@alavik.se>
-
-To the extent possible under law, the author(s) have dedicated all copyright and related and neighboring rights to this software to the public domain worldwide. This software is distributed without any warranty.
-*/
-
 #include <lib/print.h>
+#include <utils/wchar.h>
 
 void putc(char character)
 {
@@ -21,11 +15,43 @@ void putc(char character)
     stdout->OutputString(stdout, str);
 }
 
+void putwc(wchar_t character)
+{
+    CHAR16 str[2];
+    str[0] = (CHAR16)character;
+    str[1] = '\0';
+
+    if (character == L'\n')
+    {
+        stdout->OutputString(stdout, L"\r");
+    }
+
+    stdout->OutputString(stdout, str);
+}
+
 void putstr(const char *str)
 {
     while (*str)
     {
-        putc(*str++);
+        if ((unsigned char)*str < 128)
+        {
+            putc(*str);
+        }
+        else
+        {
+            wchar_t wch;
+            int len = mbtowc(&wch, str, MB_CUR_MAX);
+            if (len > 0)
+            {
+                putwc(wch);
+                str += len - 1;
+            }
+            else
+            {
+                putc(*str);
+            }
+        }
+        str++;
     }
 }
 

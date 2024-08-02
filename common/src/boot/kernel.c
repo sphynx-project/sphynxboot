@@ -13,9 +13,9 @@ To the extent possible under law, the author(s) have dedicated all copyright and
 #include <lib/alloc.h>
 #include <fs/sfs.h>
 
-void load_kernel()
+void load_kernel(char *path)
 {
-    char *kernel_path = "kernel.elf";
+    char *kernel_path = path;
 
     CHAR16 *path_wide = malloc(strlen(kernel_path) * sizeof(CHAR16) + 2);
     utf8_char_to_wchar(kernel_path, path_wide);

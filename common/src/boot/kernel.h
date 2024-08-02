@@ -8,6 +8,6 @@ To the extent possible under law, the author(s) have dedicated all copyright and
 #ifndef KERNEL_H
 #define KERNEL_H
 
-void load_kernel();
+void load_kernel(char *path);
 
 #endif // KERNEL_H
