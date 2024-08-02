@@ -13,9 +13,17 @@ To the extent possible under law, the author(s) have dedicated all copyright and
 #include <lib/alloc.h>
 #include <fs/sfs.h>
 
+void map_kernel() {
+}
+
+
 void load_kernel(char *path)
 {
     char *kernel_path = path;
+
+    printf(" - Loading %s\n", path);
+
+    map_kernel();
 
     CHAR16 *path_wide = malloc(strlen(kernel_path) * sizeof(CHAR16) + 2);
     utf8_char_to_wchar(kernel_path, path_wide);
@@ -23,7 +31,7 @@ void load_kernel(char *path)
     SimpleFile kernel = sfs_open(path_wide);
     if (EFI_ERROR(kernel.status))
     {
-        printf("ERROR: Failed to open kernel path\n");
+        printf(" - Error: Failed to open \"%s\": File not found\n", path);
         for (;;)
             ;
     }
@@ -31,7 +39,7 @@ void load_kernel(char *path)
     char *buffer = malloc(kernel.info.PhysicalSize);
     if (buffer == NULL)
     {
-        printf("ERROR: Failed to allocate memory for kernel data buffer\n");
+        printf(" - Error: Failed to allocate memory for kernel data buffer\n");
         for (;;)
             ;
     }
@@ -39,7 +47,7 @@ void load_kernel(char *path)
     sfs_read(&kernel, &*buffer);
     if (EFI_ERROR(kernel.status))
     {
-        printf("ERROR: Failed to read kernel path\n");
+        printf(" - Error: Failed to read kernel data: %d\n", kernel.status);
         for (;;)
             ;
         ;
@@ -48,7 +56,7 @@ void load_kernel(char *path)
     elf_exec_handle *data = load_elf(buffer);
     if (data == NULL)
     {
-        printf("ERROR: Failed to load kernel (tried loading as ELF)\n");
+        printf(" - Error: Failed to load kernel: Invalid ELF file\n");
         sfs_close(&kernel);
         free(buffer);
         free(path_wide);
@@ -59,6 +67,9 @@ void load_kernel(char *path)
     sfs_close(&kernel);
     free(buffer);
     free(path_wide);
+
+
+    printf("%s: 0x%llx", path, data->entry_point);
 
     // TODO: Setup the env for the kernel and pass shit based on protocol
     systemTable->BootServices->ExitBootServices(imageHandle, 0);

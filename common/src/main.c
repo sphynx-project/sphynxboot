@@ -14,7 +14,7 @@ To the extent possible under law, the author(s) have dedicated all copyright and
 #include <boot/kernel.h>
 #include <utils/wchar.h>
 
-#define KERNEL_PATH "kernel.elf"
+#define KERNEL_PATH "/boot/kernel/kernel"
 
 EFI_HANDLE *imageHandle;
 EFI_SYSTEM_TABLE *systemTable;
@@ -23,10 +23,9 @@ EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL *stdout;
 EFI_SIMPLE_TEXT_INPUT_PROTOCOL *stdin;
 EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL *stderr;
 
-EFI_STATUS sphynxboot_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
-{
+EFI_STATUS sphynxboot_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
     imageHandle = &ImageHandle;
-    systemTable = &*SystemTable;
+    systemTable = SystemTable;
     stdout = systemTable->ConOut;
     stdin = systemTable->ConIn;
     stderr = systemTable->StdErr;
@@ -35,15 +34,13 @@ EFI_STATUS sphynxboot_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
     stdout->SetCursorPosition(stdout, 0, 0);
     stdout->ClearScreen(stdout);
 
-    char *assaved_ii_banner[] = {
-        "   _____                              ____              _              ",
-        "  / ____|                            |  _ \\            | |            ",
-        " | (___  _ __  _ __  _   _ _ __ __  _| |_) | ___   ___ | |_            ",
-        "  \\___ \\| '_ \\| '_ \\| | | | '_ \\ \\/ /  _ < / _ \\ / _ \\| __|  ",
-        "  ____) | |_) | | | | |_| | | | |>  <| |_) | (_) | (_) | |_            ",
-        " |_____/| .__/|_| |_|\\__, |_| |_/_/\\_\\____/ \\___/ \\___/ \\__|     ",
-        "        | |           __/ |                                            ",
-        "        |_|          |___/                                             ",
+    CHAR16 *banner[] = {
+        L"  ____        _                        ____              _            \r\n",
+        L" / ___| _ __ | |__  _   _ _ __ __  __ | __ )  ___   ___ | |_          \r\n",
+        L" \\___ \\| '_ \\| '_ \\| | | | '_ \\\\ \\/ / |  _ \\ / _ \\ / _ \\| __| \r\n",
+        L"  ___) | |_) | | | | |_| | | | |>  <  | |_) | (_) | (_) | |_          \r\n",
+        L" |____/| .__/|_| |_|\\__, |_| |_/_/\\_\\ |____/ \\___/ \\___/ \\__|   \r\n",
+        L"       |_|          |___/                                             \r\n",
     };
 
     CHAR16 *menu[] = {
@@ -60,8 +57,12 @@ EFI_STATUS sphynxboot_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
         L"╚═══════════════════════════════════════╝\r\n",
     };
 
-    for (int i = 0; i < sizeof(assaved_ii_banner) / sizeof(assaved_ii_banner[0]); i++) {
-        printf("%s\n", assaved_ii_banner[i]);
+     for (int i = 0; i < sizeof(banner) / sizeof(banner[0]); i++) {
+        for (int j = 0; j < wchar_strlen(banner[i]); j++) {
+            CHAR16 ch = banner[i][j];
+            CHAR16 str[2] = {ch, L'\0'};
+            stdout->OutputString(stdout, str);
+        }
     }
 
     printf("\n");
@@ -74,7 +75,7 @@ EFI_STATUS sphynxboot_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
         for (int j = 0; j < wchar_strlen(menu[i]); j++) {
             CHAR16 ch = menu[i][j];
 
-            if(are_we_done == word_len) {
+            if (are_we_done == word_len) {
                 saved_i = 0;
                 are_we_done = 0;
             }
@@ -86,7 +87,7 @@ EFI_STATUS sphynxboot_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
             } else if (ch == L'R') {
                 stdout->SetAttribute(stdout, EFI_WHITE | EFI_BACKGROUND_BLACK);
             } else if ((menu[i][j-1] == L'(' && ch == L'E' && menu[i][j+1] == L'n' && menu[i][j+2] == L't' && menu[i][j+3] == L'e' && menu[i][j+4] == L'r' && menu[i][j+5] == L')') || (are_we_done != word_len && saved_i == i && word_len == 5)) {
-                if(are_we_done == 0) {
+                if (are_we_done == 0) {
                     saved_i = i;
                     word_len = 5;
                 }
@@ -94,7 +95,7 @@ EFI_STATUS sphynxboot_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
                 are_we_done++;
                 stdout->SetAttribute(stdout, EFI_WHITE | EFI_BACKGROUND_BLACK);
             } else if ((menu[i][j-1] == L'(' && ch == L'E' && menu[i][j+1] == L's' && menu[i][j+2] == L'c' && menu[i][j+3] == L')') || (are_we_done != word_len && saved_i == i && word_len == 3)) {
-                if(are_we_done == 0) {
+                if (are_we_done == 0) {
                     saved_i = i;
                     word_len = 3;
                 }
@@ -110,63 +111,40 @@ EFI_STATUS sphynxboot_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
         }
     }
 
-    printf("Autobooting in 5 seconds (space to cancel)");
-
     EFI_INPUT_KEY key;
-    EFI_UINTN key_event = 0;
+    EFI_UINTN index;
 
-    int countdown = 5;
-    int auto_boot = 1;
     while (1) {
-        stdout->SetAttribute(stdout, EFI_LIGHTGRAY | EFI_BACKGROUND_BLACK);
-        stdout->SetCursorPosition(stdout, 0, 20);
+        EFI_EVENT WaitList[1] = {systemTable->ConIn->WaitForKey};  // Only wait for key events now
+        EFI_STATUS status = systemTable->BootServices->WaitForEvent(1, WaitList, &index);
 
-        SystemTable->BootServices->WaitForEvent(1, &(SystemTable->ConIn->WaitForKey), &key_event);
-        stdin->ReadKeyStroke(stdin, &key);
-
-        switch (key.ScanCode)
-        {
-        case EFI_SCANCODE_ESC:
-            return 0;
-        default:
-            switch (key.UnicodeChar)
-            {
-            case '\r':
-            case 'b':
-                load_kernel(KERNEL_PATH);
-                SystemTable->BootServices->Exit(ImageHandle, 0, 0, NULL);
-                break;
-            case ' ':
-                printf("Auto-boot canceled. Press Enter to boot normally.\n");
-                auto_boot = 0;
-                break;
-            default:       
-               break;
-            }
+        if (EFI_ERROR(status)) {
+            printf("WaitForEvent failed: %r\n", status);
+            return status;
         }
 
-        if (auto_boot) {
-            stdout->SetAttribute(stdout, EFI_LIGHTGRAY | EFI_BACKGROUND_BLACK);
-            stdout->SetCursorPosition(stdout, 0, 20);
-            printf("Autobooting in %d seconds (space to cancel)\n", countdown);
+        if (index == 0) {
+            stdin->ReadKeyStroke(stdin, &key);
 
-            countdown--;
-            if (countdown > 0) {
-                SystemTable->BootServices->Stall(1000000);
-            }
-
-            if(countdown == 0) {   
-                stdout->SetAttribute(stdout, EFI_LIGHTGRAY | EFI_BACKGROUND_BLACK);
-                stdout->SetCursorPosition(stdout, 0, 20);
-                printf("Autobooting in %d seconds (space to cancel)\n", countdown);                     
-                if (auto_boot) {
+            switch (key.ScanCode) {
+            case EFI_SCANCODE_ESC:
+                return EFI_SUCCESS;
+            default:
+                switch (key.UnicodeChar) {
+                case '\r':
+                case 'b':
                     load_kernel(KERNEL_PATH);
+                    systemTable->BootServices->Exit(imageHandle, 0, 0, NULL);
+                    break;
+                case 'r':
+                    systemTable->RuntimeServices->ResetSystem(EfiResetCold, EFI_SUCCESS, 0, NULL);
+                    break;
+                default:
+                    break;
                 }
             }
-        }; 
-
+        }
     }
-
 
     return EFI_SUCCESS;
 }
