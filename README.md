@@ -24,3 +24,7 @@ kernel=/sphynx/kernel.elf
 ## License
 
 sphynxboot is licensed under the MIT license see [LICENSE](https://github.com/sphynxos/sphynxboot/tree/main/LICENSE).
+
+## Credits
+
+sphynxboot uses aurixos's EFI library which you can find [here](https://github.com/aurixos/efi)
