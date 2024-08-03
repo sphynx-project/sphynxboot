@@ -26,9 +26,13 @@ typedef struct framebuffer
     uint8_t  blue_mask_shift;
 } framebuffer_t;
 
+typedef struct info {
+    char name[16];
+} info_t;
 
 typedef struct boot {
     framebuffer_t *framebuffer;
+    info_t *info;
 } boot_t;
 
 #endif // SPHYNXBOOT_H

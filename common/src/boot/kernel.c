@@ -82,8 +82,13 @@ void load_kernel(char *path)
             ;
     }
 
+    info_t info = {
+        .name = "sphynxboot"
+    };
+
     boot_t boot_data = {
-        .framebuffer = &fb
+        .framebuffer = &fb,
+        .info = &info
     };
 
     // TODO: Setup the env for the kernel and pass shit based on protocol
