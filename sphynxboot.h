@@ -8,7 +8,6 @@ To the extent possible under law, the author(s) have dedicated all copyright and
 #ifndef SPHYNXBOOT_H
 #define SPHYNXBOOT_H
 
-
 // TODO: Dont depend on compiler for int types.
 #include <stdint.h>
 
@@ -26,5 +25,10 @@ typedef struct framebuffer
     uint8_t  blue_mask_size;
     uint8_t  blue_mask_shift;
 } framebuffer_t;
+
+
+typedef struct boot {
+    framebuffer_t *framebuffer;
+} boot_t;
 
 #endif // SPHYNXBOOT_H

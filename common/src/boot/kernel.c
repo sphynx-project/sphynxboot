@@ -82,14 +82,17 @@ void load_kernel(char *path)
             ;
     }
 
-    for(int x = 0; x < 100; x++) {
-        for(int y = 0; y < 100; y++) {
-            putpixel(&fb, x, y, 255, 255, 255);
-        }
-    }
+    boot_t boot_data = {
+        .framebuffer = &fb
+    };
 
     // TODO: Setup the env for the kernel and pass shit based on protocol
     systemTable->BootServices->ExitBootServices(imageHandle, 0);
-    void (*entry)(framebuffer_t*) = (void (*)(framebuffer_t*))(uintptr_t)data->entry_point;
-    entry(&fb);
+    
+    typedef void (*entry_func_t)(boot_t*) __attribute__((sysv_abi));
+    entry_func_t entry;
+    entry = (entry_func_t)(uintptr_t)data->entry_point;
+    entry(&boot_data);
+
+
 }
