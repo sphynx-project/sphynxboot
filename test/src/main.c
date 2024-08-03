@@ -12,6 +12,10 @@ void outb(uint16_t port, uint8_t value) {
     __asm__ volatile("outb %1, %0" : : "dN"(port), "a"(value));
 }
 
+void puts(const char* str) {
+    while(*str)
+        outb(0xE9, *str++);
+}
 
 void putpixel(framebuffer_t *fb, uint32_t x, uint32_t y, uint8_t r, uint8_t g, uint8_t b) {
     if (x >= fb->width || y >= fb->height) {
@@ -27,7 +31,7 @@ void putpixel(framebuffer_t *fb, uint32_t x, uint32_t y, uint8_t r, uint8_t g, u
 
 void _start(boot_t *data) {
     if(data->framebuffer->address == 0) {
-        outb(0xE9, 'E');
+        puts("Failed to get framebuffer!\n");
     }
 
     for(int x = 0; x < 100; x++) {
@@ -35,5 +39,8 @@ void _start(boot_t *data) {
             putpixel(data->framebuffer, x, y, 255, 255, 255);
         }
     }
+    
+    puts("Hello, World!\n");
+
     hlt();
 }

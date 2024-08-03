@@ -136,7 +136,7 @@ EFI_STATUS sphynxboot_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
         L"║                                       ║                 \\ .'-. \\\\   .-'_. /        \r\n",
         L"║                                       ║                  '._' '.\\\\/.-'_.'           \r\n",
         L"║                                       ║                     '--``\\('--'              \r\n",
-        L"║ sphynxboot v1.0.0 (Rose alpha)        ║                           \\\\                \r\n",
+        L"║ sphynxboot v1.0.1 (Rose alpha)        ║                           \\\\                \r\n",
         L"╚═══════════════════════════════════════╝                           `\\\\,              \r\n",
         L"                                                                      \\|               \r\n",
     };

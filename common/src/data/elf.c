@@ -76,7 +76,7 @@ elf_exec_handle *load_elf(const void *data)
                 memset(extra_zeroes, 0x00, extra_zeroes_count);
             }
         }
-        program_headers = (elf_program_header *)(program_headers + header->phentsize);
+        program_headers = (elf_program_header *)((uint8_t*)program_headers + header->phentsize);
     }
 
     handle->entry_point = (void *)header->entry;
