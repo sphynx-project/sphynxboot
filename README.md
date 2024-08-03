@@ -10,7 +10,7 @@ To build the bootloader simply run `make` in the root directory. This will build
 
 ## Usage
 
-Follow the example in `test` or look at [sphynx](https:://github.com/sphynxos/sphynx)'s code. The entry for the kernel should take in a `data_t*` (check `sphynxboot.h` for `data_t`).
+Follow the example in `test` or look at [sphynx](https:://github.com/sphynxos/sphynx)'s code. The entry for the kernel should take in a `boot_t*` (check `sphynxboot.h` for `boot_t`).
 
 ### Config file
 
