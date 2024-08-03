@@ -14,6 +14,8 @@ TARGET_COMMON := $(BIN_DIR)/BOOTX64.efi
 OVMF := $(DEPS_DIR)/ovmf/RELEASEX64_OVMF.fd
 ROOT_DIR := $(shell pwd)
 
+TEST_CONF := $(TEST_DIR)/boot.conf
+
 all: $(TARGET_COMMON)
 
 .PHONY: cleanup_tmp
@@ -80,6 +82,7 @@ test: | $(TARGET_COMMON) $(TARGET_TEST) $(OVMF)
 	    mmd -i boot.img ::/EFI ::/EFI/BOOT; \
 	    mcopy -i boot.img $(TARGET_COMMON) ::/EFI/BOOT/BOOTX64.efi; \
 	    mcopy -i $(TARGET_TEST) ::/boot/kernel/kernel; \
+		mcopy -i $(TEST_CONF) ::boot.conf; \
 	else \
 	    dd if=/dev/zero of=boot.img bs=1M count=64; \
 	    mkfs.fat -F 32 -n EFI_SYSTEM boot.img; \
@@ -89,6 +92,7 @@ test: | $(TARGET_COMMON) $(TARGET_TEST) $(OVMF)
 	    sudo cp $(TARGET_COMMON) mnt/EFI/BOOT/BOOTX64.efi; \
 	    sudo mkdir -p mnt/boot/kernel; \
 	    sudo cp $(TARGET_TEST) mnt/boot/kernel/kernel; \
+		sudo cp $(TEST_CONF) mnt/boot.conf; \
 	    sudo umount mnt; \
 	    rm -rf mnt; \
 	fi

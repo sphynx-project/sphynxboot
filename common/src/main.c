@@ -14,7 +14,7 @@ To the extent possible under law, the author(s) have dedicated all copyright and
 #include <boot/kernel.h>
 #include <utils/wchar.h>
 
-#define KERNEL_PATH "/boot/kernel/kernel"
+#define CONFIG_PATH "\\boot.conf"
 
 EFI_HANDLE *imageHandle;
 EFI_SYSTEM_TABLE *systemTable;
@@ -22,6 +22,39 @@ EFI_SYSTEM_TABLE *systemTable;
 EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL *stdout;
 EFI_SIMPLE_TEXT_INPUT_PROTOCOL *stdin;
 EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL *stderr;
+
+void cfg_get_key(const char* buffer, const char* key, char** value) {
+    if (buffer == NULL || key == NULL || value == NULL) {
+        return;
+    }
+
+    const char* key_start = strstr(buffer, key);
+    if (key_start == NULL) {
+        *value = NULL;
+        return;
+    }
+
+    key_start += strlen(key);
+    if (*key_start != '=') {
+        *value = NULL;
+        return;
+    }
+    key_start++;
+
+    const char* value_end = key_start;
+    while (*value_end != '\0' && *value_end != ' ' && *value_end != '\n' && *value_end != '\r') {
+        value_end++;
+    }
+
+    size_t value_length = value_end - key_start;
+    *value = (char*)malloc(value_length + 1);
+    if (*value == NULL) {
+        return;
+    }
+
+    strncpy(*value, key_start, value_length);
+    (*value)[value_length] = '\0';
+}
 
 EFI_STATUS sphynxboot_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
     imageHandle = &ImageHandle;
@@ -33,6 +66,54 @@ EFI_STATUS sphynxboot_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
     stdout->SetAttribute(stdout, EFI_LIGHTGRAY | EFI_BACKGROUND_BLACK);
     stdout->SetCursorPosition(stdout, 0, 0);
     stdout->ClearScreen(stdout);
+
+    char *kernel_path;
+
+    // parse config
+    
+    CHAR16 *path_wide = malloc(strlen(CONFIG_PATH) * sizeof(CHAR16) + 2);
+    utf8_char_to_wchar(CONFIG_PATH, path_wide);
+
+    SimpleFile cfg = sfs_open(path_wide);
+    if(EFI_ERROR(cfg.status)) {
+        printf(" - Error: Failed to open \"/boot.conf\"\n");
+        for(;;)
+            ;
+    }
+
+    char *cfg_data = malloc(cfg.info.PhysicalSize);
+    if (cfg_data == NULL)
+    {
+        printf(" - Error: Failed to allocate memory for kernel data buffer\n");
+        for (;;)
+            ;
+    }
+
+    sfs_read(&cfg, &*cfg_data);
+    if (EFI_ERROR(cfg.status))
+    {
+        free(path_wide);
+        printf(" - Error: Failed to read config data: %d\n", cfg.status);
+        for (;;)
+            ;
+    }
+
+    cfg_get_key(cfg_data, "kernel", &kernel_path);
+    if (kernel_path == NULL) {
+        sfs_close(&cfg);
+        free(cfg_data);
+        free(path_wide);
+
+        printf(" - Error: Failed to find kernel in boot config (A new line at the EOF the file '\\n' is required)? Expected = \"kernel=...\" \n");
+        for (;;)
+            ;
+    }
+
+    sfs_close(&cfg);
+    free(cfg_data);
+    free(path_wide);
+
+    // end
 
     CHAR16 *banner[] = {
         L"  ____        _                        ____              _            \r\n",
@@ -122,7 +203,6 @@ EFI_STATUS sphynxboot_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
     EFI_INPUT_KEY key;
     EFI_UINTN index;
 
-
     stdout->SetAttribute(stdout, EFI_LIGHTGRAY | EFI_BACKGROUND_BLACK);
 
     while (1) {
@@ -144,7 +224,7 @@ EFI_STATUS sphynxboot_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
                 switch (key.UnicodeChar) {
                 case '\r':
                 case 'b':
-                    load_kernel(KERNEL_PATH);
+                    load_kernel(kernel_path);
                     systemTable->BootServices->Exit(imageHandle, 0, 0, NULL);
                     break;
                 case 'r':
