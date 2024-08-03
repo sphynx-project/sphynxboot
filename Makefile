@@ -92,7 +92,7 @@ test: | $(TARGET_COMMON) $(TARGET_TEST) $(OVMF)
 	    sudo umount mnt; \
 	    rm -rf mnt; \
 	fi
-	@qemu-system-x86_64 -m 2G -drive if=pflash,format=raw,readonly=on,file=$(OVMF) -drive if=ide,format=raw,file=boot.img -serial stdio
+	@qemu-system-x86_64 -m 2G -drive if=pflash,format=raw,readonly=on,file=$(OVMF) -drive if=ide,format=raw,file=boot.img -debugcon stdio
 
 .PHONY: clean
 clean:
