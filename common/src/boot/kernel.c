@@ -28,8 +28,6 @@ void load_kernel(char *path)
         }
     }
 
-    printf(" - Loading %s\n", path);
-
     CHAR16 *path_wide = malloc(strlen(kernel_path) * sizeof(CHAR16) + 2);
     utf8_char_to_wchar(kernel_path, path_wide);
 
@@ -72,8 +70,6 @@ void load_kernel(char *path)
     sfs_close(&kernel);
     free(buffer);
     free(path_wide);
-
-    printf("%s: 0x%llx", path, data->entry_point);
 
     framebuffer_t fb = load_framebuffer();
     if(fb.address == 0) {

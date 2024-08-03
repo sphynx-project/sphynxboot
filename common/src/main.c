@@ -109,6 +109,19 @@ EFI_STATUS sphynxboot_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
             ;
     }
 
+    char *instant_boot;
+    cfg_get_key(cfg_data, "instant_boot", &instant_boot);
+    if (instant_boot != NULL) {
+        if(strcmp(instant_boot, "yes") == 0 || strcmp(instant_boot, "true") == 0 || strcmp(instant_boot, "on") == 0) {
+            sfs_close(&cfg);
+            free(cfg_data);
+            free(path_wide);
+
+            load_kernel(kernel_path);
+        }
+
+    }
+
     sfs_close(&cfg);
     free(cfg_data);
     free(path_wide);
