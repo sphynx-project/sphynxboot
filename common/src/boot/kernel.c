@@ -144,9 +144,14 @@ void load_kernel(char *path, char *ramfs_path)
 
     boot_t boot_data = {
         .framebuffer = &fb,
-        .info = &info,
-        .ramfs = &ramfs_file
+        .info = &info
     };
+
+    if(ramfs_file.size == 0) {
+        boot_data.ramfs = NULL;
+    } else {
+        boot_data.ramfs = &ramfs_file;
+    }
 
     systemTable->BootServices->ExitBootServices(imageHandle, 0);
 
