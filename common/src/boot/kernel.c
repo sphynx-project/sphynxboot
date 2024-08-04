@@ -176,7 +176,33 @@ void load_kernel(char *path, char *ramfs_path)
         memory_region_t *region = &boot_memory_map->regions[i];
         region->base_address = desc->PhysicalStart;
         region->length = desc->NumberOfPages * 4096;
-        region->type = desc->Type;
+        switch(desc->Type) {
+            case EfiReservedMemoryType:
+            case EfiRuntimeServicesCode:
+            case EfiRuntimeServicesData:
+            case EfiUnusableMemory:
+            case EfiMemoryMappedIO:
+            case EfiMemoryMappedIOPortSpace:
+            case EfiPalCode:
+            case EfiLoaderCode:
+            case EfiLoaderData:
+            default:
+                region->type = MEMMAP_RESERVED; 
+                break;
+            case EfiBootServicesCode:
+            case EfiBootServicesData:
+                region->type = MEMMAP_EFI_RECLAIMABLE; 
+                break;
+            case EfiACPIReclaimMemory:
+                region->type = MEMMAP_ACPI_RECLAIMABLE; 
+                break;
+            case EfiACPIMemoryNVS:
+                region->type = MEMMAP_ACPI_NVS; 
+                break;
+            case EfiConventionalMemory:
+                region->type = MEMMAP_USABLE; 
+                break;
+        }
 
         desc = (EFI_MEMORY_DESCRIPTOR *)((uint8_t *)desc + descriptor_size);
     }

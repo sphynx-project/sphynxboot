@@ -11,11 +11,13 @@ To the extent possible under law, the author(s) have dedicated all copyright and
 #include <stdint.h>
 
 // Memory region types
-#define MEM_TYPE_FREE      1
-#define MEM_TYPE_RESERVED  2
-#define MEM_TYPE_ACPI_RECLAIMABLE 3
-#define MEM_TYPE_ACPI_NVS  4
-#define MEM_TYPE_BADRAM    5
+#define MEMMAP_USABLE                 1
+#define MEMMAP_RESERVED               2
+#define MEMMAP_ACPI_RECLAIMABLE       3
+#define MEMMAP_ACPI_NVS               4
+#define MEMMAP_BAD_MEMORY             5
+#define MEMMAP_BOOTLOADER_RECLAIMABLE 0x1000
+#define MEMMAP_EFI_RECLAIMABLE        0x2000
 
 typedef struct memory_region {
     uint64_t base_address;
