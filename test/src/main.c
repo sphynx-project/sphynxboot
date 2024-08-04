@@ -17,6 +17,11 @@ void puts(const char* str) {
         outb(0xE9, *str++);
 }
 
+void putptr(uint8_t *data, uint64_t size) {
+    for(uint64_t i = 0; i < size; i++)
+        outb(0xE9, data[i]);
+}
+
 void putpixel(framebuffer_t *fb, uint32_t x, uint32_t y, uint8_t r, uint8_t g, uint8_t b) {
     if (x >= fb->width || y >= fb->height) {
         return;
@@ -40,7 +45,7 @@ void _start(boot_t *data) {
         }
     }
     
-    puts("Hello, World!\n");
+    putptr((uint8_t*)data->ramfs->address, data->ramfs->size);
 
     hlt();
 }

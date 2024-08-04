@@ -30,9 +30,15 @@ typedef struct info {
     char name[16];
 } info_t;
 
+typedef struct file {
+    void *address;
+    uint64_t size;
+} file_t;
+
 typedef struct boot {
     framebuffer_t *framebuffer;
     info_t *info;
+    file_t *ramfs;
 } boot_t;
 
 #endif // SPHYNXBOOT_H

@@ -68,6 +68,7 @@ EFI_STATUS sphynxboot_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
     stdout->ClearScreen(stdout);
 
     char *kernel_path;
+    char *ramfs_path;
 
     // parse config
     
@@ -109,6 +110,10 @@ EFI_STATUS sphynxboot_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
             ;
     }
 
+
+    // Ramfs can be NULL, if its null there is none. Dont pass it.
+    cfg_get_key(cfg_data, "ramfs", &ramfs_path);
+
     char *instant_boot;
     cfg_get_key(cfg_data, "instant_boot", &instant_boot);
     if (instant_boot != NULL) {
@@ -117,10 +122,11 @@ EFI_STATUS sphynxboot_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
             free(cfg_data);
             free(path_wide);
 
-            load_kernel(kernel_path);
+            load_kernel(kernel_path, ramfs_path);
         }
 
     }
+
 
     sfs_close(&cfg);
     free(cfg_data);
@@ -237,7 +243,7 @@ EFI_STATUS sphynxboot_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
                 switch (key.UnicodeChar) {
                 case '\r':
                 case 'b':
-                    load_kernel(kernel_path);
+                    load_kernel(kernel_path, ramfs_path);
                     systemTable->BootServices->Exit(imageHandle, 0, 0, NULL);
                     break;
                 case 'r':
