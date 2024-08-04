@@ -12,6 +12,7 @@ To the extent possible under law, the author(s) have dedicated all copyright and
 #include <lib/string.h>
 #include <lib/alloc.h>
 #include <fs/sfs.h>
+#include <common.h>
 
 void load_kernel(char *path, char *ramfs_path)
 {
@@ -70,8 +71,7 @@ void load_kernel(char *path, char *ramfs_path)
 
     sfs_close(&kernel);
 
-    // RAMFS processing
-    file_t ramfs_file = {0}; // Initialize to zero
+    file_t ramfs_file = {0};
 
     if (ramfs_path != NULL && ramfs_path[0] != '\0')
     {
@@ -130,12 +130,55 @@ void load_kernel(char *path, char *ramfs_path)
         }
     }
 
-    // The framebuffer setup
     framebuffer_t fb = load_framebuffer();
     if (fb.address == 0) {
         printf(" - Error: Failed to initialize framebuffer: Address is 0\n");
         for (;;)
             ;
+    }
+
+    EFI_UINTN memory_map_size = 0;
+    EFI_MEMORY_DESCRIPTOR *memory_map = NULL;
+    EFI_UINTN map_key;
+    EFI_UINTN descriptor_size;
+    uint32_t descriptor_version;
+
+    EFI_STATUS status = systemTable->BootServices->GetMemoryMap(&memory_map_size, memory_map, &map_key, &descriptor_size, &descriptor_version);
+
+    memory_map_size += 2 * descriptor_size;
+    memory_map = (EFI_MEMORY_DESCRIPTOR *)malloc(memory_map_size);
+    if (memory_map == NULL) {
+        printf(" - Error: Failed to allocate memory for memory map\n");
+        for (;;)
+            ;
+    }
+
+    status = systemTable->BootServices->GetMemoryMap(&memory_map_size, memory_map, &map_key, &descriptor_size, &descriptor_version);
+    if (EFI_ERROR(status)) {
+        printf(" - Error: Failed to get memory map: %d\n", status);
+        free(memory_map);
+        for (;;)
+            ;
+    }
+
+    EFI_UINTN num_entries = memory_map_size / descriptor_size;
+    memory_map_t *boot_memory_map = (memory_map_t *)malloc(sizeof(memory_map_t) + num_entries * sizeof(memory_region_t));
+    if (boot_memory_map == NULL) {
+        printf(" - Error: Failed to allocate memory for boot memory map\n");
+        free(memory_map);
+        for (;;)
+            ;
+    }
+
+    boot_memory_map->region_count = num_entries;
+    EFI_MEMORY_DESCRIPTOR *desc = memory_map;
+    for (EFI_UINTN i = 0; i < num_entries; ++i) {
+        memory_region_t *region = &boot_memory_map->regions[i];
+        region->base_address = desc->PhysicalStart;
+        region->length = desc->NumberOfPages * 4096;
+        region->type = desc->Type;
+
+        desc = (EFI_MEMORY_DESCRIPTOR *)((uint8_t *)desc + descriptor_size);
     }
 
     info_t info = {
@@ -144,19 +187,23 @@ void load_kernel(char *path, char *ramfs_path)
 
     boot_t boot_data = {
         .framebuffer = &fb,
-        .info = &info
+        .info = &info,
+        .memory_map = boot_memory_map
     };
 
-    if(ramfs_file.size == 0) {
+    if (ramfs_file.size == 0) {
         boot_data.ramfs = NULL;
     } else {
         boot_data.ramfs = &ramfs_file;
     }
 
-    systemTable->BootServices->ExitBootServices(imageHandle, 0);
+    systemTable->BootServices->ExitBootServices(imageHandle, map_key);
 
     typedef void (*entry_func_t)(boot_t*) __attribute__((sysv_abi));
     entry_func_t entry;
     entry = (entry_func_t)(uintptr_t)data->entry_point;
     entry(&boot_data);
+
+    free(memory_map);
+    free(boot_memory_map);
 }

@@ -8,8 +8,25 @@ To the extent possible under law, the author(s) have dedicated all copyright and
 #ifndef SPHYNXBOOT_H
 #define SPHYNXBOOT_H
 
-// TODO: Dont depend on compiler for int types.
 #include <stdint.h>
+
+// Memory region types
+#define MEM_TYPE_FREE      1
+#define MEM_TYPE_RESERVED  2
+#define MEM_TYPE_ACPI_RECLAIMABLE 3
+#define MEM_TYPE_ACPI_NVS  4
+#define MEM_TYPE_BADRAM    5
+
+typedef struct memory_region {
+    uint64_t base_address;
+    uint64_t length;
+    uint32_t type;
+} memory_region_t;
+
+typedef struct memory_map {
+    uint32_t region_count;
+    memory_region_t regions[];
+} memory_map_t;
 
 typedef struct framebuffer
 {
@@ -39,6 +56,7 @@ typedef struct boot {
     framebuffer_t *framebuffer;
     info_t *info;
     file_t *ramfs;
+    memory_map_t *memory_map;
 } boot_t;
 
 #endif // SPHYNXBOOT_H
