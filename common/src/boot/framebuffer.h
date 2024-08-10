@@ -9,6 +9,7 @@ To the extent possible under law, the author(s) have dedicated all copyright and
 #define FRAMEBUFFER_H
 
 #include <sphynxboot.h>
+#include <stdint.h>
 
 framebuffer_t load_framebuffer();
 void putpixel(framebuffer_t *fb, uint32_t x, uint32_t y, uint8_t r, uint8_t g, uint8_t b);

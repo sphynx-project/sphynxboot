@@ -4,6 +4,7 @@ Written in 2024 by Kevin Alavik <kevin@alavik.se>
 
 To the extent possible under law, the author(s) have dedicated all copyright and related and neighboring rights to this software to the public domain worldwide. This software is distributed without any warranty.
 */
+
 #include <boot/kernel.h>
 #include <boot/framebuffer.h>
 #include <data/elf.h>
@@ -119,9 +120,6 @@ void load_kernel(char *path, char *ramfs_path)
                     ;
             }
 
-            printf("RAMFS contents: %.*s\n", ramfs.info.FileSize, ramfs_buffer);
-            printf("RAMFS Size: %d\n", ramfs.info.FileSize);
-
             ramfs_file.address = (void *)ramfs_buffer;
             ramfs_file.size = ramfs.info.FileSize;
 
@@ -162,7 +160,7 @@ void load_kernel(char *path, char *ramfs_path)
     }
 
     EFI_UINTN num_entries = memory_map_size / descriptor_size;
-    memory_map_t *boot_memory_map = (memory_map_t *)malloc(sizeof(memory_map_t) + num_entries * sizeof(memory_region_t));
+    memory_map_t *boot_memory_map = (memory_map_t *)malloc(sizeof(memory_map_t) + num_entries * sizeof(memory_region_t *));
     if (boot_memory_map == NULL) {
         printf(" - Error: Failed to allocate memory for boot memory map\n");
         free(memory_map);
@@ -171,9 +169,27 @@ void load_kernel(char *path, char *ramfs_path)
     }
 
     boot_memory_map->region_count = num_entries;
+    boot_memory_map->regions = (memory_region_t **)malloc(num_entries * sizeof(memory_region_t *));
+    if (boot_memory_map->regions == NULL) {
+        printf(" - Error: Failed to allocate memory for memory regions\n");
+        free(boot_memory_map);
+        free(memory_map);
+        for (;;)
+            ;
+    }
+
     EFI_MEMORY_DESCRIPTOR *desc = memory_map;
     for (EFI_UINTN i = 0; i < num_entries; ++i) {
-        memory_region_t *region = &boot_memory_map->regions[i];
+        memory_region_t *region = (memory_region_t *)malloc(sizeof(memory_region_t));
+        if (region == NULL) {
+            printf(" - Error: Failed to allocate memory for region\n");
+            free(boot_memory_map->regions);
+            free(boot_memory_map);
+            free(memory_map);
+            for (;;)
+                ;
+        }
+
         region->base_address = desc->PhysicalStart;
         region->length = desc->NumberOfPages * 4096;
         switch(desc->Type) {
@@ -204,6 +220,7 @@ void load_kernel(char *path, char *ramfs_path)
                 break;
         }
 
+        boot_memory_map->regions[i] = region;
         desc = (EFI_MEMORY_DESCRIPTOR *)((uint8_t *)desc + descriptor_size);
     }
 
@@ -230,6 +247,10 @@ void load_kernel(char *path, char *ramfs_path)
     entry = (entry_func_t)(uintptr_t)data->entry_point;
     entry(&boot_data);
 
-    free(memory_map);
+    for (EFI_UINTN i = 0; i < num_entries; ++i) {
+        free(boot_memory_map->regions[i]);
+    }
+    free(boot_memory_map->regions);
     free(boot_memory_map);
+    free(memory_map);
 }
