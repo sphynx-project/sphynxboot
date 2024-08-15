@@ -87,8 +87,8 @@ test: | $(TARGET_COMMON) $(TARGET_TEST) $(OVMF)
 	    mmd -i boot.img ::/EFI ::/EFI/BOOT; \
 	    echo " + mcopy -i boot.img $(TARGET_COMMON) ::/EFI/BOOT/BOOTX64.efi"; \
 	    mcopy -i boot.img $(TARGET_COMMON) ::/EFI/BOOT/BOOTX64.efi; \
-	    echo " + mcopy -i test/test.txt ::/boot/kernel/ramfs"; \
-		mcopy -i test/test.txt ::/boot/kernel/ramfs; \
+	    echo " + mcopy -i test/image.seif ::/boot/kernel/ramfs"; \
+		mcopy -i test/image.seif ::/boot/kernel/ramfs; \
 	    echo " + mcopy -i $(TARGET_TEST) ::/boot/kernel/kernel"; \
 	    mcopy -i $(TARGET_TEST) ::/boot/kernel/kernel; \
 		echo " + mcopy -i $(TEST_CONF) ::boot.conf"; \
@@ -108,8 +108,8 @@ test: | $(TARGET_COMMON) $(TARGET_TEST) $(OVMF)
 	    sudo cp $(TARGET_COMMON) mnt/EFI/BOOT/BOOTX64.efi; \
 	    echo " + sudo mkdir -p mnt/boot/kernel"; \
 	    sudo mkdir -p mnt/boot/kernel; \
-	    echo " + sudo cp test/test.txt mnt/boot/kernel/ramfs"; \
-	    sudo cp test/test.txt mnt/boot/kernel/ramfs; \
+	    echo " + sudo cp test/image.seif mnt/boot/kernel/ramfs"; \
+	    sudo cp test/image.seif mnt/boot/kernel/ramfs; \
 	    echo " + sudo cp $(TARGET_TEST) mnt/boot/kernel/kernel"; \
 	    sudo cp $(TARGET_TEST) mnt/boot/kernel/kernel; \
 		echo " + sudo cp $(TEST_CONF) mnt/boot.conf"; \
