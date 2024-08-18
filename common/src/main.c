@@ -74,48 +74,6 @@ EFI_STATUS sphynxboot_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
     stdout->SetCursorPosition(stdout, 0, 0);
     stdout->ClearScreen(stdout);
 
-    // setup screen size
-
-    EFI_UINTN rows, cols;
-    EFI_STATUS status;
-    EFI_UINTN numModes, nativeMode;
-
-    status = stdout->QueryMode(stdout, stdout->Mode == NULL ? 0 : stdout->Mode->Mode, &cols, &rows);
-    if (status == (EFI_UINTN)EFI_NOT_STARTED)
-    {
-        status = stdout->SetMode(stdout, 0);
-    }
-
-    if (EFI_ERROR(status))
-    {
-        printf(" - Error: Unable to get native mode for stdout\n");
-        for (;;)
-            ;
-    }
-    else
-    {
-        nativeMode = stdout->Mode->Mode;
-        numModes = stdout->Mode->MaxNode;
-    }
-
-    status = stdout->QueryMode(stdout, nativeMode, &cols, &rows);
-    if (EFI_ERROR(status))
-    {
-        printf(" - Error: Unable to get native mode info for stdout\n");
-        for (;;)
-            ;
-    }
-
-    status = stdout->SetMode(stdout, nativeMode);
-    if (EFI_ERROR(status))
-    {
-        printf(" - Error: Unable to set mode for stdout\n");
-        for (;;)
-            ;
-    }
-
-    // end
-
     char *kernel_path;
     char *ramfs_path;
 
