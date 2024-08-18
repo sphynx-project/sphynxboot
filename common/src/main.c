@@ -23,32 +23,38 @@ EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL *stdout;
 EFI_SIMPLE_TEXT_INPUT_PROTOCOL *stdin;
 EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL *stderr;
 
-void cfg_get_key(const char* buffer, const char* key, char** value) {
-    if (buffer == NULL || key == NULL || value == NULL) {
+void cfg_get_key(const char *buffer, const char *key, char **value)
+{
+    if (buffer == NULL || key == NULL || value == NULL)
+    {
         return;
     }
 
-    const char* key_start = strstr(buffer, key);
-    if (key_start == NULL) {
+    const char *key_start = strstr(buffer, key);
+    if (key_start == NULL)
+    {
         *value = NULL;
         return;
     }
 
     key_start += strlen(key);
-    if (*key_start != '=') {
+    if (*key_start != '=')
+    {
         *value = NULL;
         return;
     }
     key_start++;
 
-    const char* value_end = key_start;
-    while (*value_end != '\0' && *value_end != ' ' && *value_end != '\n' && *value_end != '\r') {
+    const char *value_end = key_start;
+    while (*value_end != '\0' && *value_end != ' ' && *value_end != '\n' && *value_end != '\r')
+    {
         value_end++;
     }
 
     size_t value_length = value_end - key_start;
-    *value = (char*)malloc(value_length + 1);
-    if (*value == NULL) {
+    *value = (char *)malloc(value_length + 1);
+    if (*value == NULL)
+    {
         return;
     }
 
@@ -56,7 +62,8 @@ void cfg_get_key(const char* buffer, const char* key, char** value) {
     (*value)[value_length] = '\0';
 }
 
-EFI_STATUS sphynxboot_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
+EFI_STATUS sphynxboot_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable)
+{
     imageHandle = &ImageHandle;
     systemTable = SystemTable;
     stdout = systemTable->ConOut;
@@ -67,18 +74,61 @@ EFI_STATUS sphynxboot_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
     stdout->SetCursorPosition(stdout, 0, 0);
     stdout->ClearScreen(stdout);
 
+    // setup screen size
+
+    EFI_UINTN rows, cols;
+    EFI_STATUS status;
+    EFI_UINTN numModes, nativeMode;
+
+    status = stdout->QueryMode(stdout, stdout->Mode == NULL ? 0 : stdout->Mode->Mode, &cols, &rows);
+    if (status == (EFI_UINTN)EFI_NOT_STARTED)
+    {
+        status = stdout->SetMode(stdout, 0);
+    }
+
+    if (EFI_ERROR(status))
+    {
+        printf(" - Error: Unable to get native mode for stdout\n");
+        for (;;)
+            ;
+    }
+    else
+    {
+        nativeMode = stdout->Mode->Mode;
+        numModes = stdout->Mode->MaxNode;
+    }
+
+    status = stdout->QueryMode(stdout, nativeMode, &cols, &rows);
+    if (EFI_ERROR(status))
+    {
+        printf(" - Error: Unable to get native mode info for stdout\n");
+        for (;;)
+            ;
+    }
+
+    status = stdout->SetMode(stdout, nativeMode);
+    if (EFI_ERROR(status))
+    {
+        printf(" - Error: Unable to set mode for stdout\n");
+        for (;;)
+            ;
+    }
+
+    // end
+
     char *kernel_path;
     char *ramfs_path;
 
     // parse config
-    
+
     CHAR16 *path_wide = malloc(strlen(CONFIG_PATH) * sizeof(CHAR16) + 2);
     utf8_char_to_wchar(CONFIG_PATH, path_wide);
 
     SimpleFile cfg = sfs_open(path_wide);
-    if(EFI_ERROR(cfg.status)) {
+    if (EFI_ERROR(cfg.status))
+    {
         printf(" - Error: Failed to open \"/boot.conf\"\n");
-        for(;;)
+        for (;;)
             ;
     }
 
@@ -100,7 +150,8 @@ EFI_STATUS sphynxboot_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
     }
 
     cfg_get_key(cfg_data, "kernel", &kernel_path);
-    if (kernel_path == NULL) {
+    if (kernel_path == NULL)
+    {
         sfs_close(&cfg);
         free(cfg_data);
         free(path_wide);
@@ -110,23 +161,22 @@ EFI_STATUS sphynxboot_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
             ;
     }
 
-
     // Ramfs can be NULL, if its null there is none. Dont pass it.
     cfg_get_key(cfg_data, "ramfs", &ramfs_path);
 
     char *instant_boot;
     cfg_get_key(cfg_data, "instant_boot", &instant_boot);
-    if (instant_boot != NULL) {
-        if(strcmp(instant_boot, "yes") == 0 || strcmp(instant_boot, "true") == 0 || strcmp(instant_boot, "on") == 0) {
+    if (instant_boot != NULL)
+    {
+        if (strcmp(instant_boot, "yes") == 0 || strcmp(instant_boot, "true") == 0 || strcmp(instant_boot, "on") == 0)
+        {
             sfs_close(&cfg);
             free(cfg_data);
             free(path_wide);
 
             load_kernel(kernel_path, ramfs_path);
         }
-
     }
-
 
     sfs_close(&cfg);
     free(cfg_data);
@@ -160,8 +210,10 @@ EFI_STATUS sphynxboot_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
         L"                                                                      \\|               \r\n",
     };
 
-     for (int i = 0; i < sizeof(banner) / sizeof(banner[0]); i++) {
-        for (int j = 0; j < wchar_strlen(banner[i]); j++) {
+    for (int i = 0; i < sizeof(banner) / sizeof(banner[0]); i++)
+    {
+        for (int j = 0; j < wchar_strlen(banner[i]); j++)
+        {
             CHAR16 ch = banner[i][j];
             CHAR16 str[2] = {ch, L'\0'};
             stdout->OutputString(stdout, str);
@@ -174,43 +226,60 @@ EFI_STATUS sphynxboot_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
     int saved_i = 0;
     int word_len = 0;
 
-    for (int i = 0; i < sizeof(menu) / sizeof(menu[0]); i++) {
-        for (int j = 0; j < wchar_strlen(menu[i]); j++) {
+    for (int i = 0; i < sizeof(menu) / sizeof(menu[0]); i++)
+    {
+        for (int j = 0; j < wchar_strlen(menu[i]); j++)
+        {
             CHAR16 ch = menu[i][j];
 
-            if (are_we_done == word_len) {
+            if (are_we_done == word_len)
+            {
                 saved_i = 0;
                 are_we_done = 0;
             }
 
             stdout->SetAttribute(stdout, EFI_LIGHTGRAY | EFI_BACKGROUND_BLACK);
 
-
-            if (ch == L'B' && i <= 8) {
+            if (ch == L'B' && i <= 8)
+            {
                 stdout->SetAttribute(stdout, EFI_WHITE | EFI_BACKGROUND_BLACK);
-            } else if (ch == L'R' && i <= 8) {
+            }
+            else if (ch == L'R' && i <= 8)
+            {
                 stdout->SetAttribute(stdout, EFI_WHITE | EFI_BACKGROUND_BLACK);
-            } else if ((menu[i][j-1] == L'(' && ch == L'E' && menu[i][j+1] == L'n' && menu[i][j+2] == L't' && menu[i][j+3] == L'e' && menu[i][j+4] == L'r' && menu[i][j+5] == L')') || (are_we_done != word_len && saved_i == i && word_len == 5)) {
-                if (are_we_done == 0) {
+            }
+            else if ((menu[i][j - 1] == L'(' && ch == L'E' && menu[i][j + 1] == L'n' && menu[i][j + 2] == L't' && menu[i][j + 3] == L'e' && menu[i][j + 4] == L'r' && menu[i][j + 5] == L')') || (are_we_done != word_len && saved_i == i && word_len == 5))
+            {
+                if (are_we_done == 0)
+                {
                     saved_i = i;
                     word_len = 5;
                 }
 
                 are_we_done++;
                 stdout->SetAttribute(stdout, EFI_WHITE | EFI_BACKGROUND_BLACK);
-            } else if ((menu[i][j-1] == L'(' && ch == L'E' && menu[i][j+1] == L's' && menu[i][j+2] == L'c' && menu[i][j+3] == L')') || (are_we_done != word_len && saved_i == i && word_len == 3)) {
-                if (are_we_done == 0) {
+            }
+            else if ((menu[i][j - 1] == L'(' && ch == L'E' && menu[i][j + 1] == L's' && menu[i][j + 2] == L'c' && menu[i][j + 3] == L')') || (are_we_done != word_len && saved_i == i && word_len == 3))
+            {
+                if (are_we_done == 0)
+                {
                     saved_i = i;
                     word_len = 3;
                 }
 
                 are_we_done++;
                 stdout->SetAttribute(stdout, EFI_WHITE | EFI_BACKGROUND_BLACK);
-            } else if(j >= 42 && i <= 6) {
+            }
+            else if (j >= 42 && i <= 6)
+            {
                 stdout->SetAttribute(stdout, EFI_LIGHTRED | EFI_BACKGROUND_BLACK);
-            } else if(j >= 42 & i >= 7) {
+            }
+            else if (j >= 42 & i >= 7)
+            {
                 stdout->SetAttribute(stdout, EFI_GREEN | EFI_BACKGROUND_BLACK);
-            } else {
+            }
+            else
+            {
                 stdout->SetAttribute(stdout, EFI_LIGHTGRAY | EFI_BACKGROUND_BLACK);
             }
 
@@ -224,23 +293,28 @@ EFI_STATUS sphynxboot_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
 
     stdout->SetAttribute(stdout, EFI_LIGHTGRAY | EFI_BACKGROUND_BLACK);
 
-    while (1) {
-        EFI_EVENT WaitList[1] = {systemTable->ConIn->WaitForKey};  // Only wait for key events now
+    while (1)
+    {
+        EFI_EVENT WaitList[1] = {systemTable->ConIn->WaitForKey}; // Only wait for key events now
         EFI_STATUS status = systemTable->BootServices->WaitForEvent(1, WaitList, &index);
 
-        if (EFI_ERROR(status)) {
+        if (EFI_ERROR(status))
+        {
             printf("WaitForEvent failed: %r\n", status);
             return status;
         }
 
-        if (index == 0) {
+        if (index == 0)
+        {
             stdin->ReadKeyStroke(stdin, &key);
 
-            switch (key.ScanCode) {
+            switch (key.ScanCode)
+            {
             case EFI_SCANCODE_ESC:
                 return EFI_SUCCESS;
             default:
-                switch (key.UnicodeChar) {
+                switch (key.UnicodeChar)
+                {
                 case '\r':
                 case 'b':
                     load_kernel(kernel_path, ramfs_path);
