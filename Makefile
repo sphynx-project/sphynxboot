@@ -14,6 +14,8 @@ TARGET_COMMON := $(BIN_DIR)/BOOTX64.efi
 OVMF := $(DEPS_DIR)/ovmf/RELEASEX64_OVMF.fd
 ROOT_DIR := $(shell pwd)
 
+TEST_CONF := $(TEST_DIR)/boot.conf
+
 all: $(TARGET_COMMON)
 
 .PHONY: cleanup_tmp
@@ -24,16 +26,18 @@ cleanup_tmp:
 define DOWNLOAD_template
 deps-download-$(1):
 	@if [ ! -d $(DEPS_DIR)/$(1) ]; then \
-		echo " + Creating directory $(DEPS_DIR)/$(1)"; \
+		echo " + mkdir -p $(DEPS_DIR)/$(1)"; \
 		mkdir -p $(DEPS_DIR)/$(1); \
 		if [ "$(2)" = ".zip" ]; then \
-			echo " + Downloading and unzipping $(3)"; \
+			echo " + curl -Ls $(3) -o $(TMP_DIR)/$(1).zip"; \
 			curl -Ls $(3) -o $(TMP_DIR)/$(1).zip && \
+			echo " + unzip -o -q $(TMP_DIR)/$(1).zip -d $(TMP_DIR)"; \
 			unzip -o -q $(TMP_DIR)/$(1).zip -d $(TMP_DIR) && \
+			echo " + mv $(TMP_DIR)/*/* $(DEPS_DIR)/$(1)"; \
 			mv $(TMP_DIR)/*/* $(DEPS_DIR)/$(1) && \
 			$(MAKE) cleanup_tmp; \
 		else \
-			echo " + Downloading $(3)"; \
+			echo " + curl -Ls $(3) -o $(DEPS_DIR)/$(1)/$(notdir $(3))"; \
 			curl -Ls $(3) -o $(DEPS_DIR)/$(1)/$(notdir $(3)) || { echo "Error downloading $(3)"; exit 1; }; \
 		fi; \
 	else \
@@ -75,23 +79,47 @@ common: deps-download-efi
 .PHONY: test
 test: | $(TARGET_COMMON) $(TARGET_TEST) $(OVMF)
 	@if [ "$(shell uname -s)" = "Darwin" ]; then \
+	    echo " + dd if=/dev/zero of=boot.img bs=1m count=64"; \
 	    dd if=/dev/zero of=boot.img bs=1m count=64; \
+	    echo " + mkfs.fat -F 32 -n EFI_SYSTEM boot.img"; \
 	    mkfs.fat -F 32 -n EFI_SYSTEM boot.img; \
+	    echo " + mmd -i boot.img ::/EFI ::/EFI/BOOT"; \
 	    mmd -i boot.img ::/EFI ::/EFI/BOOT; \
+	    echo " + mcopy -i boot.img $(TARGET_COMMON) ::/EFI/BOOT/BOOTX64.efi"; \
 	    mcopy -i boot.img $(TARGET_COMMON) ::/EFI/BOOT/BOOTX64.efi; \
+	    echo " + mcopy -i test/image.seif ::/boot/kernel/ramfs"; \
+		mcopy -i test/image.seif ::/boot/kernel/ramfs; \
+	    echo " + mcopy -i $(TARGET_TEST) ::/boot/kernel/kernel"; \
 	    mcopy -i $(TARGET_TEST) ::/boot/kernel/kernel; \
+		echo " + mcopy -i $(TEST_CONF) ::boot.conf"; \
+		mcopy -i $(TEST_CONF) ::boot.conf; \
 	else \
+	    echo " + dd if=/dev/zero of=boot.img bs=1M count=64"; \
 	    dd if=/dev/zero of=boot.img bs=1M count=64; \
+	    echo " + mkfs.fat -F 32 -n EFI_SYSTEM boot.img"; \
 	    mkfs.fat -F 32 -n EFI_SYSTEM boot.img; \
+	    echo " + mkdir -p mnt"; \
 	    mkdir -p mnt; \
+	    echo " + sudo mount -o loop boot.img mnt"; \
 	    sudo mount -o loop boot.img mnt; \
+	    echo " + sudo mkdir -p mnt/EFI/BOOT"; \
 	    sudo mkdir -p mnt/EFI/BOOT; \
+	    echo " + sudo cp $(TARGET_COMMON) mnt/EFI/BOOT/BOOTX64.efi"; \
 	    sudo cp $(TARGET_COMMON) mnt/EFI/BOOT/BOOTX64.efi; \
+	    echo " + sudo mkdir -p mnt/boot/kernel"; \
 	    sudo mkdir -p mnt/boot/kernel; \
+	    echo " + sudo cp test/image.seif mnt/boot/kernel/ramfs"; \
+	    sudo cp test/image.seif mnt/boot/kernel/ramfs; \
+	    echo " + sudo cp $(TARGET_TEST) mnt/boot/kernel/kernel"; \
 	    sudo cp $(TARGET_TEST) mnt/boot/kernel/kernel; \
+		echo " + sudo cp $(TEST_CONF) mnt/boot.conf"; \
+		sudo cp $(TEST_CONF) mnt/boot.conf; \
+	    echo " + sudo umount mnt"; \
 	    sudo umount mnt; \
+	    echo " + rm -rf mnt"; \
 	    rm -rf mnt; \
 	fi
+	@echo " + qemu-system-x86_64 -m 2G -drive if=pflash,format=raw,readonly=on,file=$(OVMF) -drive if=ide,format=raw,file=boot.img -debugcon stdio"
 	@qemu-system-x86_64 -m 2G -drive if=pflash,format=raw,readonly=on,file=$(OVMF) -drive if=ide,format=raw,file=boot.img -debugcon stdio
 
 .PHONY: clean

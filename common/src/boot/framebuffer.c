@@ -12,7 +12,7 @@ To the extent possible under law, the author(s) have dedicated all copyright and
 
 framebuffer_t load_framebuffer() {
     framebuffer_t fb;
-     EFI_STATUS status;
+    EFI_STATUS status;
 
     EFI_GUID gopGuid = EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID;
     EFI_GRAPHICS_OUTPUT_PROTOCOL *gop;
